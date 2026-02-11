@@ -1,0 +1,29 @@
+#!/bin/bash
+
+
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 input.txt"
+    exit 1
+fi
+
+input_file=$1
+output_file="output.txt"
+
+
+> "$output_file"
+
+while read -r line
+do
+    if [[ $line == *"frame.time"* ]]; then
+        echo "\"frame.time\": \"${line#*: }\"" >> "$output_file"
+    fi
+
+    if [[ $line == *"wlan.fc.type"* ]]; then
+        echo "\"wlan.fc.type\": \"${line#*: }\"" >> "$output_file"
+    fi
+
+    if [[ $line == *"wlan.fc.subtype"* ]]; then
+        echo "\"wlan.fc.subtype\": \"${line#*: }\"" >> "$output_file"
+    fi
+
+done < "$input_file"

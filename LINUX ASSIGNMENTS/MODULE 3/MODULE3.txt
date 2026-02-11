@@ -1,0 +1,97 @@
+nithesh@nithesh:~$ touch backup_managers.sh
+nithesh@nithesh:~$ chmod +x backup_managers.sh
+nithesh@nithesh:~$ vim backup_managers.sh
+nithesh@nithesh:~$ mkdir -p /home/nithesh/source
+nithesh@nithesh:~$ mkdir -p /home/nithesh/backup
+nithesh@nithesh:~$ touch /home/nithesh/source/a.txt
+nithesh@nithesh:~$ touch /home/nithesh/source/b.txt
+nithesh@nithesh:~$ touch /home/nithesh/source/c.txt
+nithesh@nithesh:~$ ./backup_managers.sh source backup .txt
+files to be backed up
+a.txt - 0 bytes
+b.txt - 0 bytes
+c.txt - 0 bytes
+backup done
+nithesh@nithesh:~$ ls backup
+a.txt  backup_report.log  b.txt  c.txt
+nithesh@nithesh:~$ cat backup/backup_report.log
+backup report
+total files : 3
+total size : 0
+backup directory : backup
+date : Sat Feb  7 11:19:46 PM IST 2026
+
+
+backup_managers.sh:
+
+#!/bin/bash
+
+
+if [ "$#" -ne 3 ]; then
+        echo "use : $0 <sd> <bd> <ext>"
+        exit 1
+fi
+
+sd="$1"
+bd="$2"
+ext="$3"
+
+if [ ! -d "$sd" ]; then
+        echo "source directory does not exist"
+        exit 1
+fi
+
+if [ ! -d "$bd" ]; then
+        mkdir -p "$bd"
+        if [ $? -ne 0 ]; then
+                echo "failed to create"
+                exit 1
+        fi
+fi
+
+files=( "$sd"/*"$ext")
+
+if [ ! -e "${files[0]}" ]; then
+        echo " no files found with extensions"
+        exit 1
+fi
+
+export backup_count=0
+export total_size=0
+
+echo "files to be backed up"
+for file in "${files[@]}"; do
+        size=$(stat -c %s "$file")
+        echo "$(basename "$file") - $size bytes"
+done
+
+for file in "${files[@]}"; do
+        filename=$(basename "$file")
+        dest="$bd/$filename"
+
+        if [ -e "$dest" ]; then
+                if [ "$file" -nt "$dest" ];then
+                        cp "$file" "$dest"
+                else
+                        continue
+                fi
+        else
+                cp "$file" "$dest"
+        fi
+
+        size=$(stat -c %s "$file")
+        total_size=$((total_size + size))
+        backup_count=$((backup_count + 1))
+done
+
+report="$bd/backup_report.log"
+
+{
+    echo "backup report"
+    echo "total files : $backup_count"
+    echo "total size : $total_size"
+    echo "backup directory : $bd"
+    echo "date : $(date)"
+} > "$report"
+
+echo "backup done"
